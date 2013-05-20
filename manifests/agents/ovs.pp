@@ -1,3 +1,13 @@
+# == Class: quantum::agents::ovs
+#
+# Setups OVS quantum agent.
+#
+# === Parameters
+#
+# [*firewall_driver*]
+#   (optional) Firewall driver for realizing quantum security group function.
+#   Defaults to 'quantum.agent.linux.iptables_firewall.IptablesFirewallDriver'.
+#
 class quantum::agents::ovs (
   $package_ensure       = 'present',
   $enabled              = true,
@@ -8,6 +18,7 @@ class quantum::agents::ovs (
   $local_ip             = false,
   $tunnel_bridge        = 'br-tun',
   $polling_interval     = 2,
+  $firewall_driver      = false,
   $root_helper          = 'sudo /usr/bin/quantum-rootwrap /etc/quantum/rootwrap.conf'
 ) {
 
@@ -23,7 +34,7 @@ class quantum::agents::ovs (
   Package['quantum-plugin-ovs-agent'] -> Quantum_plugin_ovs<||>
 
   # Reads both its own and the base Quantum config
-  Quantum_plugin_ovs<||> -> Service['quantum-plugin-ovs-service']
+  Quantum_plugin_ovs<||> ~> Service['quantum-plugin-ovs-service']
 
   if ($bridge_mappings != []) {
     # bridge_mappings are used to describe external networks that are
@@ -51,15 +62,22 @@ class quantum::agents::ovs (
   }
 
   quantum_plugin_ovs {
-    'AGENT/polling_interval':       value => $polling_interval;
-    'AGENT/root_helper':            value => $root_helper;
-    'OVS/integration_bridge':       value => $integration_bridge;
+    'AGENT/polling_interval':        value => $polling_interval;
+    'AGENT/root_helper':             value => $root_helper;
+    'OVS/integration_bridge':        value => $integration_bridge;
+  }
+
+  if ($firewall_driver) {
+    quantum_plugin_ovs { 'SECURITYGROUP/firewall_driver': value => $firewall_driver }
+  } else {
+    quantum_plugin_ovs { 'SECURITYGROUP/firewall_driver': ensure => absent }
   }
 
   if ($enable_tunneling) {
     quantum_plugin_ovs {
       'OVS/enable_tunneling':   value => 'True';
       'OVS/tunnel_bridge':      value => $tunnel_bridge;
+
     }
   }
 

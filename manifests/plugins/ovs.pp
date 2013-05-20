@@ -54,7 +54,6 @@ class quantum::plugins::ovs (
     'DATABASE/sql_connection':      value => $sql_connection;
     'DATABASE/sql_max_retries':     value => $sql_max_retries;
     'DATABASE/reconnect_interval':  value => $reconnect_interval;
-    'OVS/network_vlan_ranges':      value => $network_vlan_ranges;
     'OVS/tenant_network_type':      value => $tenant_network_type;
   }
 
@@ -65,6 +64,12 @@ class quantum::plugins::ovs (
       # TODO(ijw): do something with a virtualised node
       # 'OVS/enable_tunneling':   value => 'True';
       'OVS/tunnel_id_ranges':   value => $tunnel_id_ranges;
+    }
+  }
+
+  if ($tenant_network_type == 'vlan') {
+    quantum_plugin_ovs {
+      'OVS/network_vlan_ranges':      value => $network_vlan_ranges;
     }
   }
 
